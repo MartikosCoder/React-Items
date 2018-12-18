@@ -1,37 +1,6 @@
 let test_case = [];
 let templates = [];
-
-axios.get('http://demo4452328.mockable.io/properties')
-    .then(function (response) {
-        test_case = response.data.data;
-
-        axios.get('http://demo4452328.mockable.io/templates')
-            .then(function (responseTemplates) {
-                templates = responseTemplates.data;
-
-                createPage();
-            })
-            .catch(function (errorTemplates) {
-                console.log(errorTemplates);
-            });
-    })
-    .catch(function (error) {
-        console.log(error);
-    });
-
-function App(props) {
-    const items = props.items;
-    const wrappedItems = [];
-
-    for(let i = 0; i < items.length; i++){
-        wrappedItems.push(<Wrapper key={i} data={items[i]} />);
-    }
-
-    return (
-        wrappedItems
-    )
-}
-
+let cur_temp = null;
 function createComponent(props, template, tag){
     const store = {
         IMAGE: <Image images={props.data.images} id={props.data.id}></Image>,
@@ -50,7 +19,6 @@ function createComponent(props, template, tag){
 
         switch (tag) {
             case 'IMAGE':
-                console.log("img");
                 return (<Image images={props.data.images} id={props.data.id}>
                     {childs}
                 </Image>);
@@ -71,11 +39,47 @@ function createComponent(props, template, tag){
         return store[tag];
     }
 }
+
+axios.get('http://demo4452328.mockable.io/properties')
+    .then(function (response) {
+        test_case = response.data.data;
+
+        axios.get('http://demo4452328.mockable.io/templates')
+            .then(function (responseTemplates) {
+                templates = responseTemplates.data;
+                cur_temp = templates[2];
+
+                createPage();
+                document.getElementById('choice').addEventListener('change', function() {
+                    cur_temp = templates[this.options[this.selectedIndex].value];
+                    createPage();
+                });
+            })
+            .catch(function (errorTemplates) {
+                console.log(errorTemplates);
+            });
+    })
+    .catch(function (error) {
+        console.log(error);
+    });
+
+function App(props) {
+    const items = props.items;
+    const wrappedItems = [];
+
+    for(let i = 0; i < items.length; i++){
+        wrappedItems.push(<Wrapper key={i} data={items[i]} />);
+    }
+
+    return (
+        <div className="items">{ wrappedItems }</div>
+    )
+}
 function Wrapper(props) {
     const result = [];
 
     if(templates.length > 0) {
-        const template = templates[2].template;
+        const template = cur_temp.template;
         for(let i = 0; i < template.length; i++){
             const component = template[i].component;
             const children = template[i].children;
@@ -152,7 +156,14 @@ function Price(props) {
 
 function createPage() {
     ReactDOM.render(
-        <App items={test_case} />,
+        <div>
+            <App items={test_case}/>
+            <select className="view-choice" id="choice" defaultValue='2'>
+                <option value="0">Вариант 1</option>
+                <option value="1">Вариант 2</option>
+                <option value="2">Вариант 3</option>
+            </select>
+        </div>,
         document.getElementById('app-root')
     );
 }
